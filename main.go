@@ -42,6 +42,9 @@ func main() {
 
 func parseVersion(input string) (string, int) {
 	split := strings.Split(input, ".")
+	if strings.Contains(input, "-") {
+		split = strings.Split(input, "-")
+	}
 	build, err := strconv.Atoi(split[1])
 	if err != nil {
 		panic(err)
