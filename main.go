@@ -41,15 +41,16 @@ func main() {
 }
 
 func parseVersion(input string) (string, int) {
-	split := strings.Split(input, ".")
+	splitpos := strings.LastIndex(input, ".")
 	if strings.Contains(input, "-") {
-		split = strings.Split(input, "-")
+		splitpos = strings.LastIndex(input, "-")
 	}
-	build, err := strconv.Atoi(split[1])
+	mcver := input[:splitpos]
+	build, err := strconv.Atoi(input[splitpos+1:])
 	if err != nil {
 		panic(err)
 	}
-	return split[0], build
+	return mcver, build
 }
 
 func DownloadString(url string) (string, error) {
