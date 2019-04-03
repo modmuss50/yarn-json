@@ -5,6 +5,7 @@ import (
 	"encoding/xml"
 	"errors"
 	"fmt"
+	"gitlab.com/c0b/go-ordered-json"
 	"io/ioutil"
 	"net/http"
 	"strconv"
@@ -20,14 +21,19 @@ func main() {
 	mavenMetadata := MavenMetadata{}
 	xml.Unmarshal([]byte(mavenMeta), &mavenMetadata)
 
-	jsonMap := make(map[string][]int)
+	om := ordered.NewOrderedMap()
 
 	for _, version := range mavenMetadata.Versioning.Versions.Version {
 		mcVer, build := parseVersion(version)
-		jsonMap[mcVer] = append(jsonMap[mcVer], build)
+		var values []int
+		if om.Has(mcVer) {
+			values = om.Get(mcVer).([]int)
+		}
+		values = append(values, build)
+		om.Set(mcVer, values)
 	}
 
-	json, err := json.Marshal(jsonMap)
+	json, err := json.Marshal(om)
 	if err != nil {
 		panic(err)
 	}
@@ -38,7 +44,15 @@ func main() {
 	WriteStringToFile(jsonStr, "/home/webdata/maven/net/fabricmc/yarn/versions.json")
 
 	fmt.Println(jsonStr)
+
 }
+
+type Member struct {
+	Key   string
+	Value interface{}
+}
+
+type OrderedObject []Member
 
 func parseVersion(input string) (string, int) {
 	splitpos := strings.LastIndex(input, ".")
