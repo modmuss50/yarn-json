@@ -55,6 +55,9 @@ type Member struct {
 type OrderedObject []Member
 
 func parseVersion(input string) (string, int) {
+	if strings.Contains(input, "+build.") {
+		return parseVersionNew(input)
+	}
 	splitpos := strings.LastIndex(input, ".")
 	if strings.Contains(input, "-") {
 		splitpos = strings.LastIndex(input, "-")
@@ -65,6 +68,14 @@ func parseVersion(input string) (string, int) {
 		panic(err)
 	}
 	return mcver, build
+}
+
+func parseVersionNew(input string) (string, int) {
+	build, err := strconv.Atoi(input[strings.LastIndex(input, ".")+1:])
+	if err != nil {
+		panic(err)
+	}
+	return input[:strings.LastIndex(input, "+")], build
 }
 
 func DownloadString(url string) (string, error) {
