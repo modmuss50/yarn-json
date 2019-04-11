@@ -22,6 +22,7 @@ func main() {
 	xml.Unmarshal([]byte(mavenMeta), &mavenMetadata)
 
 	om := ordered.NewOrderedMap()
+	newMap := ordered.NewOrderedMap()
 
 	for _, version := range mavenMetadata.Versioning.Versions.Version {
 		mcVer, build := parseVersion(version)
@@ -31,18 +32,33 @@ func main() {
 		}
 		values = append(values, build)
 		om.Set(mcVer, values)
+
+		var newVersions []NewVersion
+		if newMap.Has(mcVer) {
+			newVersions = newMap.Get(mcVer).([]NewVersion)
+		}
+		separator := "."
+		if strings.Contains(version, "+build.") {
+			separator = "+build."
+		}
+		newVersions = append(newVersions, NewVersion{Maven: "net.fabricmc:yarn:" + version, Build: build, Separator: separator})
+		newMap.Set(mcVer, newVersions)
 	}
 
-	json, err := json.Marshal(om)
+	jsonBty, err := json.Marshal(om)
 	if err != nil {
 		panic(err)
 	}
+	jsonStr := string(jsonBty)
+	//WriteStringToFile(jsonStr, "/home/webdata/maven/net/fabricmc/yarn/versions.json")
+	//fmt.Println(jsonStr)
 
-	jsonStr := string(json)
-
-	//TODO dont hard code this
-	WriteStringToFile(jsonStr, "/home/webdata/maven/net/fabricmc/yarn/versions.json")
-
+	jsonBty, err = json.Marshal(newMap)
+	if err != nil {
+		panic(err)
+	}
+	jsonStr = string(jsonBty)
+	//WriteStringToFile(jsonStr, "/home/webdata/maven/net/fabricmc/yarn/versions.json")
 	fmt.Println(jsonStr)
 
 }
@@ -117,4 +133,10 @@ type MavenMetadataVersioning struct {
 
 type MavenMetadataVersions struct {
 	Version []string `xml:"version"`
+}
+
+type NewVersion struct {
+	Separator string `json:"separator"`
+	Maven     string `json:"maven"`
+	Build     int    `json:"build"`
 }
